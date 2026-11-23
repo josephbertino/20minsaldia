@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101214">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>20 Mins al Día</title>
+<style>
+  :root {
+    --bg: #101214; --panel: #1a1d21; --panel2: #24282d; --text: #f2f2f0; --muted: #8b9096;
+    --work: #ffb347; --rest: #6fd39b; --lead: #7fb2ff; --ring-bg: #2a2e33; --warn: #ff9a76;
+    --l0: #3fae62; --l1: #ecb52d; --l2: #f0822f; --l3: #e5503f;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex; justify-content: center; transition: background .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body.flash { background: #4a3214; }
+  .wrap {
+    width: min(460px, calc(100% - 32px));
+    padding: max(18px, env(safe-area-inset-top)) 0 calc(40px + env(safe-area-inset-bottom));
+  }
+  button { font: inherit; border: 0; cursor: pointer; color: var(--text); background: var(--panel); }
+  button:active { transform: scale(.96); }
+  button:disabled { opacity: .4; cursor: default; transform: none; }
+  a { color: var(--lead); }
+
+  /* ---------- setup ---------- */
+  .brand { font-size: 12px; letter-spacing: .22em; color: var(--muted); text-align: center; font-weight: 600; }
+  .types { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 12px; }
+  .types button {
+    padding: 11px 2px; border-radius: 10px; font-size: 13px; font-weight: 650;
+    letter-spacing: .04em; text-transform: uppercase; white-space: nowrap;
+  }
+  .types button.on { background: var(--work); color: #1b1407; }
+  .levels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+  @media (max-width: 440px) { .levels { grid-template-columns: repeat(2, 1fr); } }
+  .levels button {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 9px 4px; border-radius: 10px; font-size: 13px; color: var(--muted);
+    border: 1px solid transparent; white-space: nowrap;
+  }
+  .levels button i { width: 9px; height: 9px; border-radius: 50%; flex: none; opacity: .35; }
+  .levels button.on { color: var(--text); background: var(--panel2); border-color: #50565d; }
+  .levels button.on i { opacity: 1; }
+  .levels[hidden] { display: none; }
+  .hint { font-size: 12px; color: var(--muted); text-align: center; margin-top: 8px; min-height: 1.3em; }
+  body.session #setup { display: none; }
+
+  /* ---------- timer (from the reference timer) ---------- */
+  .label { font-size: 14px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); text-align: center; margin-top: 18px; }
+  .label b { color: var(--text); font-weight: 600; }
+  .name { font-size: clamp(22px, 6.5vw, 30px); font-weight: 650; margin-top: 8px; min-height: 1.25em; text-align: center; line-height: 1.2; }
+  .ring { position: relative; width: min(100%, 330px); aspect-ratio: 1; margin: 12px auto 16px; }
+  .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-width: 10; }
+  .ring .bg { stroke: var(--ring-bg); }
+  .ring .fg { stroke: var(--work); stroke-linecap: round; transition: stroke .3s; }
+  .ring.lead .fg { stroke: var(--lead); }
+  .ring.rest .fg { stroke: var(--rest); }
+  .ring.done .fg { stroke: var(--rest); }
+  .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .time { font-size: clamp(56px, 19vw, 92px); font-weight: 300; font-variant-numeric: tabular-nums; line-height: 1; }
+  .sub { margin-top: 10px; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .buttons { display: flex; gap: 10px; justify-content: center; }
+  .buttons button { font-size: 16px; font-weight: 600; border-radius: 999px; padding: 14px 24px; }
+  .buttons .primary { background: var(--work); color: #1b1407; min-width: 124px; transition: background .2s, color .2s, transform .08s; }
+  .buttons .primary.running { background: #ff6b6b; color: #fff; }
+  .buttons .primary.paused { background: var(--rest); color: #0d2016; }
+
+  /* AMRAP round counter */
+  .counter { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 16px; }
+  .counter[hidden] { display: none; }
+  .counter .count { min-width: 84px; text-align: center; }
+  .counter .count b { display: block; font-size: 36px; font-weight: 300; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .counter .count small { font-size: 11px; color: var(--muted); letter-spacing: .14em; text-transform: uppercase; }
+  .counter button { border-radius: 999px; padding: 12px 18px; font-weight: 600; font-size: 16px; }
+  .counter .inc { background: var(--rest); color: #0d2016; padding: 14px 24px; }
+  .holdrow { display: flex; justify-content: center; margin-top: 12px; }
+  .holdrow[hidden] { display: none; }
+  .hold {
+    min-width: 230px; border-radius: 999px; padding: 14px 24px; font-size: 16px; font-weight: 600;
+    background: var(--lead); color: #0b1a33; font-variant-numeric: tabular-nums;
+  }
+  .hold.is-ready { background: var(--panel2); color: var(--lead); box-shadow: inset 0 0 0 2px var(--lead); }
+  .hold.is-hold { background: var(--work); color: #1b1407; }
+
+  /* ---------- routine list ---------- */
+  .rhead { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 28px 4px 6px; }
+  .rtitle { font-size: 18px; font-weight: 650; }
+  .rsub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .rhead button { border-radius: 999px; padding: 9px 14px; font-size: 14px; font-weight: 600; flex: none; }
+  body.session .rhead button { visibility: hidden; }
+  ol.list { list-style: none; padding: 0; margin: 4px 0 0; }
+  ol.list li { border-radius: 12px; }
+  ol.list li + li { margin-top: 2px; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 10px 8px 10px 12px; }
+  .n {
+    width: 26px; height: 26px; border-radius: 50%; background: var(--ring-bg); color: var(--text);
+    display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex: none;
+  }
+  .ex { flex: 1; min-width: 0; }
+  .exname { font-size: 16px; line-height: 1.3; }
+  .exname .reps { color: var(--work); font-weight: 650; font-variant-numeric: tabular-nums; }
+  .exname .star { color: var(--l1); font-size: 13px; }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 6px; margin-top: 5px; font-size: 12px; color: var(--muted); }
+  .tag { border: 1px solid var(--ring-bg); border-radius: 999px; padding: 1px 7px; }
+  .dots { display: inline-flex; gap: 3px; margin: 0 2px; }
+  .dots i { width: 7px; height: 7px; border-radius: 50%; border: 1px solid #3d4248; }
+  .dots i.l0 { background: var(--l0); border-color: var(--l0); }
+  .dots i.l1 { background: var(--l1); border-color: var(--l1); }
+  .dots i.l2 { background: var(--l2); border-color: var(--l2); }
+  .dots i.l3 { background: var(--l3); border-color: var(--l3); }
+  .adj { font-size: 12px; color: var(--warn); margin-top: 4px; }
+  .ib {
+    width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    flex: none; background: var(--panel2); color: var(--text); text-decoration: none;
+  }
+  .ib svg { width: 15px; height: 15px; fill: currentColor; }
+  .ib.open { background: var(--lead); color: #0b1a33; }
+  .ib.yt { width: 44px; height: 31px; border-radius: 9px; background: #ff0033; color: #fff; }
+  .ib.yt svg { width: 14px; height: 14px; }
+  .ib.yt.open { background: #8f1428; color: #fff; }
+  li.current { background: var(--panel); }
+  li.current .n { background: var(--work); color: #1b1407; }
+  li.done .exname { text-decoration: line-through; }
+  li.done .row { opacity: .5; }
+  li.done .n { background: var(--rest); color: #0d2016; }
+  .video { padding: 0 12px 14px 50px; }
+  .video[hidden] { display: none; }
+  .video iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 10px; background: #000; }
+  .video.tall iframe { width: min(100%, 290px); aspect-ratio: 9 / 16; }
+  .video.ig iframe { width: min(100%, 340px); aspect-ratio: auto; height: 580px; }
+  .video a { display: inline-block; margin-top: 7px; font-size: 13px; }
+  .warm { margin: 14px 4px 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  /* ---------- settings ---------- */
+  details { margin-top: 26px; color: var(--muted); font-size: 14px; }
+  summary { cursor: pointer; text-align: center; }
+  .settings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  .settings label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+  .settings input[type=number] {
+    width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--ring-bg);
+    background: var(--panel); color: var(--text); font: inherit; font-size: 15px; text-align: center;
+  }
+  .settings .wide { grid-column: 1 / -1; }
+  .settings h4 { grid-column: 1 / -1; margin: 8px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+  .gear { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 12px; }
+  @media (max-width: 380px) { .gear { grid-template-columns: 1fr; } }
+  .gear label { flex-direction: row; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
+  .gear input { width: 17px; height: 17px; margin: 0; flex: none; accent-color: var(--work); }
+  .settings .row2 { grid-column: 1 / -1; display: flex; gap: 10px; justify-content: center; margin-top: 4px; }
+  .settings .row2 button { padding: 9px 16px; font-size: 14px; border-radius: 999px; font-weight: 600; }
+  .note { margin-top: 12px; font-size: 12px; line-height: 1.55; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section id="setup">
+    <div class="brand">20 MINS AL DÍA</div>
+    <div class="types" id="types"></div>
+    <div class="levels" id="levels"></div>
+    <div class="hint" id="hint"></div>
+  </section>
+
+  <div class="label" id="label">Press start</div>
+  <div class="name" id="name"></div>
+
+  <div class="ring" id="ring">
+    <svg viewBox="0 0 220 220"><circle class="bg" cx="110" cy="110" r="100"/><circle class="fg" id="arc" cx="110" cy="110" r="100"/></svg>
+    <div class="center">
+      <div class="time" id="time">0:10</div>
+      <div class="sub" id="sub"></div>
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button class="primary" id="startBtn">Start</button>
+    <button id="skipBtn">Skip</button>
+    <button id="resetBtn">Reset</button>
+  </div>
+
+  <div class="counter" id="counter" hidden>
+    <button id="decBtn" aria-label="Remove a round">&minus;</button>
+    <div class="count"><b id="rounds">0</b><small>rounds</small></div>
+    <button class="inc" id="incBtn">+1 round</button>
+  </div>
+  <div class="holdrow" id="holdRow" hidden><button class="hold" id="holdBtn"></button></div>
+
+  <div class="rhead">
+    <div><div class="rtitle" id="rtitle"></div><div class="rsub" id="rsub"></div></div>
+    <button id="newBtn">New routine</button>
+  </div>
+  <ol class="list" id="list"></ol>
+  <div class="warm" id="warm"></div>
+
+  <details>
+    <summary>Settings, equipment &amp; sound test</summary>
+    <div class="settings">
+      <label>Total (min)<input id="inTotal" type="number" min="1" max="120" value="20"></label>
+      <label>Break (s)<input id="inRest" type="number" min="0" max="300" value="10"></label>
+      <label>Lead-in (s)<input id="inLead" type="number" min="0" max="120" value="10"></label>
+      <h4>Equipment I have</h4>
+      <div class="gear" id="gear"></div>
+      <div class="row2"><button id="testBtn">Test sound</button></div>
+    </div>
+    <div class="note">
+      Push, Pull and Pierna split the total time evenly across the 5 exercises, with a short break between them.
+      Reto 20 and Cindy are one countdown for the whole time.
+      When Reto 20 includes a timed hold, a hold button appears under the round counter. Tap it each round:
+      you get 5 s to get in position (three ticks and the &ldquo;go&rdquo; beep), then the hold counts down and the horn sounds when it ends.
+      While a hold runs, the big clock shows the hold and the 20-minute time moves to the small line under it.
+      Pausing or resetting the main timer stops the hold.
+      Each strength day uses the next of the guide's 3 distributions for that day and avoids the exercises you did last time;
+      that history is saved when you press Start.
+      The lead-in and each break end with three ticks and a high &ldquo;go&rdquo; beep. An &ldquo;awooga&rdquo; horn sounds when each
+      exercise ends, and three in a row at the very end. Space bar starts and pauses.
+    </div>
+  </details>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('20min.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem('20min.' + k, JSON.stringify(v)); } catch (e) {} }
+  };
+
+  // ======================================================================
+  // Exercise library — "20 Mins al Día", sección 05 (Biblioteca de ejercicios)
+  // [name, muscles, levels (0=Principiante 1=Int. Bajo 2=Int. Alto 3=Experto), equipment, video, ★]
+  // ======================================================================
+  const LEVELS = ['Principiante', 'Int. Bajo', 'Int. Alto', 'Experto'];
+  const MUSCLES = {
+    Pe: 'Pecho', Tr: 'Tríceps', HF: 'Hombro (F)', HL: 'Hombro (L)', Bi: 'Bíceps', Es: 'Espalda', Co: 'Core',
+    Cu: 'Cuádriceps', Gl: 'Glúteos', Is: 'Isquiotibiales', Ge: 'Gemelos', Fr: 'Core · Frente', Cs: 'Core · Costados'
+  };
+  // equipment code -> [label from the guide, alternatives (any one set of items is enough)]
+  const EQUIP = {
+    '':    ['Ninguno', [[]]],
+    nom:   ['Ninguno (o mancuernas)', [[]]],
+    bot:   ['Botellas con agua', [['botellas']]],
+    silla: ['Silla', [['silla']]],
+    moc:   ['Mochila con peso', [['mochila']]],
+    kb:    ['Pesa rusa', [['kb']]],
+    kbm:   ['Pesa rusa o mochila', [['kb'], ['mochila']]],
+    kbmn:  ['Pesa rusa o mancuernas', [['kb'], ['mancuernas']]],
+    kbmm:  ['Pesa rusa, mancuernas o mochila', [['kb'], ['mancuernas'], ['mochila']]],
+    kb2:   ['2 pesas rusas o mancuernas', [['kb2'], ['mancuernas']]],
+    mn:    ['Mancuernas', [['mancuernas']]],
+    chm:   ['Chaleco o mochila', [['chaleco'], ['mochila']]],
+    ban:   ['Banda de resistencia', [['banda']]],
+    bar:   ['Barra de dominadas', [['barra']]],
+    barch: ['Barra + chaleco o mochila', [['barra', 'chaleco'], ['barra', 'mochila']]],
+    mesa:  ['Barra o escritorio firme', [['mesa']]]
+  };
+  const GEAR = [
+    ['kb', 'Pesa rusa', true], ['barra', 'Barra de dominadas', true], ['chaleco', 'Chaleco con peso', true],
+    ['mochila', 'Mochila', true], ['botellas', 'Botellas con agua', true], ['silla', 'Silla', true],
+    ['kb2', 'Segunda pesa rusa', false], ['mancuernas', 'Mancuernas', false], ['banda', 'Banda de resistencia', false],
+    ['mesa', 'Barra baja o escritorio firme (remo invertido)', false]
+  ];
+  const YT = 'https://www.youtube.com/';
+  const RAW = {
+    push: [
+      ['Elevaciones frontales con botellas', 'HF', '0', 'bot', YT + 'watch?v=990t1zMfVko&t=5s'],
+      ['Press de hombro con botellas', 'HF+Tr', '0', 'bot', YT + 'watch?v=7UtpqhVAK_k', 1],
+      ['Flexiones abiertas con rodillas en piso', 'Pe', '0', '', YT + 'shorts/zwb_m6n-qbo'],
+      ['Flexiones abiertas en pared', 'Pe', '0', '', 'https://fitwill.app/es/exercise/2740/wide-push-up-wall/'],
+      ['Pec fly en piso con botellas', 'Pe', '0', 'bot', YT + 'watch?v=JXfWvhWLIyM'],
+      ['Flexión con rodillas en piso', 'Pe+Tr', '0', '', YT + 'shorts/YN5pE2JmzHM', 1],
+      ['Flexión en pared', 'Pe+Tr', '0', '', YT + 'shorts/p8ZpiJTMKew', 1],
+      ['Plancha alta a baja de rodillas', 'Tr+Co', '0', '', YT + 'watch?v=B6WKjq2qck0'],
+      ['Elevaciones frontales con pesa rusa', 'HF', '0123', 'kbmm', YT + 'shorts/x2xfiBGRQ6c'],
+      ['Press de pecho de pie', 'Pe+HF', '0123', 'kb', YT + 'watch?v=PH1jToFW4_8'],
+      ['Press de pecho con 1 pesa rusa', 'Pe+Tr', '0123', 'kbm', YT + 'shorts/CXNhE6vnE-E'],
+      ['Extensión de tríceps con pesa rusa', 'Tr', '0123', 'kbm', YT + 'shorts/RvPRg5JieeA'],
+      ['Pec fly en piso con mancuernas', 'Pe', '0123', 'mn', YT + 'shorts/p0pBpLZ_d18'],
+      ['Press de hombro con pesa rusa', 'HF+Tr', '0123', 'kbm', YT + 'shorts/wEDrFiuzzrs', 1],
+      ['Flexión en pica con rodillas', 'HF+Tr', '1', '', YT + 'shorts/rluAxBrb9VY', 1],
+      ['Flexión normal', 'Pe+Tr', '12', '', YT + 'shorts/cWrJFIdTje0', 1],
+      ['Flexión abierta', 'Pe', '12', '', YT + 'shorts/QcibV6-RWwg'],
+      ['Flexión diamante', 'Tr', '12', '', YT + 'shorts/bZJW_GR9jUk'],
+      ['Plancha alta a baja', 'Tr+Co', '12', '', YT + 'shorts/xmaeU-JozaI'],
+      ['Flexión en pica', 'HF+Tr', '23', '', YT + 'shorts/plRzSDRd4Qs', 1],
+      ['Flexión normal con peso', 'Pe+Tr', '23', 'chm', YT + 'watch?v=rdpMZOr2Ars', 1],
+      ['Flexión abierta con peso', 'Pe', '23', 'chm', YT + 'shorts/z-8EP58LYOY'],
+      ['Flexión diamante con peso', 'Tr', '23', 'chm', YT + 'shorts/xTxK8rhMX10'],
+      ['Flexión de esfinge', 'Tr+Co', '23', '', YT + 'shorts/JvG2Kt2GgGs'],
+      ['Flexión en pica con pies elevados', 'HF+Tr', '3', '', YT + 'shorts/xk4NBMP1IJM', 1],
+      ['Flexión de arquero', 'Pe+Tr', '3', '', YT + 'shorts/Ebu9H5yQEbY']
+    ],
+    pull: [
+      ['Elevaciones laterales con botellas', 'HL', '0', 'bot', YT + 'watch?v=NX4twx9uRok', 1],
+      ['Curl de bíceps elevado con botellas', 'HL+Bi', '0', 'bot', YT + 'watch?v=mmH9fT6YRas'],
+      ['Remo inclinado con mochila', 'Es+Bi', '01', 'moc', YT + 'shorts/8R5W556LJQU', 1],
+      ['Curl con mochila', 'Bi', '01', 'moc', YT + 'shorts/w2EWlVSsF1A'],
+      ['Ángeles invertidos', 'Es', '01', '', YT + 'shorts/04RaU03kgEI'],
+      ['Superman con jalón', 'Es+Co', '01', 'nom', YT + 'watch?v=XMvTVF6IqP0'],
+      ['Elevación lateral con pesas', 'HL', '0123', 'kb2', YT + 'shorts/zBqZqAjCnR4', 1],
+      ['Horn curl', 'Bi', '0123', 'kb', YT + 'shorts/1naOMuRpNqA'],
+      ['Curl con bandas', 'Bi', '0123', 'ban', YT + 'watch?v=eBXEQ3v8fSY'],
+      ['Pullover', 'Es', '0123', 'kbm', YT + 'shorts/96STTfPthqQ'],
+      ['Remo vertical con pesa rusa', 'HL', '0123', 'kbm', YT + 'shorts/6ARhwq3_2ws', 1],
+      ['Remo invertido (piernas dobladas)', 'Es+Bi', '1', 'mesa', YT + 'watch?v=Eh5FY4dpC3c', 1],
+      ['Dominadas negativas', 'Es+Bi', '1', 'bar', YT + 'shorts/0ZP86cDHXnM', 1],
+      ['Remo inclinado a una mano', 'Es+Bi', '12', 'kbm', YT + 'shorts/cBbkLv3ZcDs', 1],
+      ['Remo invertido (piernas estiradas)', 'Es+Bi', '12', 'mesa', YT + 'watch?v=cczgGh3YdWE', 1],
+      ['Elevación lateral con banda', 'HL', '123', 'ban', YT + 'watch?v=F_VNJ0busKc'],
+      ['Remo en plancha', 'Es+Co', '123', 'kb2', YT + 'shorts/w9YWgj3r-kI'],
+      ['Curl de bíceps elevado', 'HL+Bi', '123', 'kbmn', YT + 'watch?v=mmH9fT6YRas'],
+      ['Dominada supinada', 'Es+Bi', '2', 'bar', YT + 'shorts/P-ewAI7ns5E', 1],
+      ['Remo invertido (piernas elevadas)', 'Es+Bi', '2', 'mesa', YT + 'watch?v=8grT7NqpOxw', 1],
+      ['Dominada', 'Es+Bi', '23', 'bar', YT + 'shorts/BT3CSQKeEww', 1],
+      ['Dominada con peso', 'Es+Bi', '3', 'barch', YT + 'shorts/aLBlVXR8j08']
+    ],
+    pierna: [
+      ['Sentadilla asistida con silla', 'Cu+Gl', '0', 'silla', YT + 'shorts/0cR3trxOgAY', 1],
+      ['Sentadilla', 'Cu+Gl', '01', '', YT + 'shorts/zzKu_zgCH8c', 1],
+      ['Buenos días con mochila', 'Gl+Is', '01', 'moc', YT + 'watch?v=BcL14WQML18'],
+      ['Puente de glúteos', 'Gl+Co', '01', '', YT + 'shorts/FfXq0AUz_Xw', 1],
+      ['Caminata en puntillas', 'Ge+Co', '01', '', YT + 'shorts/0_pFOJ6kGws', 1],
+      ['Zancada hacia atrás', 'Cu+Gl', '01', '', YT + 'shorts/8xtGoDqX4c8', 1],
+      ['Sentadilla con elevación de talones', 'Cu+Ge', '01', '', YT + 'watch?v=rhhShWpEhF8'],
+      ['Sentadilla isométrica (45 s)', 'Cu', '01', '', YT + 'shorts/N2K_KXviL4w'],
+      ['Sentadilla búlgara', 'Cu+Gl', '12', '', YT + 'shorts/vNoLabSf5Mk', 1],
+      ['Sentadilla con salto', 'Cu+Ge', '12', '', YT + 'shorts/9hi65bciMdA', 1],
+      ['Sentadilla goblet', 'Cu+Gl', '123', 'kbm', YT + 'shorts/7-80HiXX1K8', 1],
+      ['Zancada hacia atrás goblet', 'Cu+Gl', '123', 'kbm', YT + 'shorts/oU7Z1lSbvA0', 1],
+      ['Peso muerto rumano', 'Gl+Is', '123', 'kbm', YT + 'shorts/YTg29FfdaQk', 1],
+      ['Caminata en puntillas con peso', 'Ge+Co', '123', 'kbm', YT + 'shorts/6lHKz9qnm0U', 1],
+      ['Sentadilla con elevación de talones + peso', 'Cu+Ge', '123', 'kbm', YT + 'shorts/3wCp6MN2Z_Q'],
+      ['Sentadilla isométrica + peso (45 s)', 'Cu', '123', 'kbm', YT + 'shorts/vfa2G-mKyI8'],
+      ['Puente de glúteos a una pierna', 'Gl+Co', '2', '', YT + 'shorts/D3VXJN8AR2k', 1],
+      ['Sentadilla isométrica a una pierna (45 s)', 'Cu', '2', '', YT + 'shorts/V7sM8KtbxRk'],
+      ['Puente de glúteos a una pierna + peso', 'Gl+Co', '23', 'kbm', YT + 'shorts/TCAWZbdNroA', 1],
+      ['Swing de pesa rusa', 'Gl+Is', '23', 'kb', YT + 'shorts/ao4TqSb0zxQ'],
+      ['Sentadilla búlgara con peso', 'Cu+Gl', '23', 'kbm', YT + 'shorts/9glgC3gTrg4', 1],
+      ['Peso muerto rumano a una pierna', 'Gl+Is', '23', 'kbm', YT + 'shorts/Z3TRkamr5jA', 1],
+      ['Sentadilla pistola asistida', 'Cu+Gl', '23', '', YT + 'shorts/4yvWPos4ark'],
+      ['Sentadilla con salto + peso', 'Cu+Ge', '23', 'kbm', YT + 'shorts/sCqllk6DR9w', 1],
+      ['Sentadilla pistola', 'Cu+Gl', '3', '', YT + 'watch?v=LedPBQ4MdSw']
+    ],
+    core: [
+      ['Plancha lateral con rodillas en piso (45 s)', 'Cs', '0', '', YT + 'shorts/F0mMa36HPxQ', 1],
+      ['Plancha de rodillas (45 s)', 'Fr', '0', '', YT + 'shorts/DKz50AGu8HE', 1],
+      ['Toques de talón', 'Cs', '0', '', YT + 'shorts/Q6-lgOkv1Bo'],
+      ['Crunch de 90 grados', 'Fr', '01', '', YT + 'shorts/v4Vf0hbBw4U', 1],
+      ['Plancha (45 s)', 'Fr', '1', '', YT + 'shorts/ysX1CpHKGCo', 1],
+      ['Russian twists', 'Cs', '1', '', YT + 'shorts/iFQV6q4xRXM', 1],
+      ['Elevación de piernas (manos en glúteos)', 'Fr', '1', '', YT + 'watch?v=4oYU_1HjbtM'],
+      ['Plancha lateral (45 s)', 'Cs', '12', '', YT + 'shorts/GaugOQIlUPs', 1],
+      ['Elevación de piernas (manos a los lados)', 'Fr', '12', '', YT + 'shorts/rPBOgb4pUs0'],
+      ['Elevación de piernas (+ cadera)', 'Fr', '12', '', YT + 'shorts/PfXQJ1-s9A8'],
+      ['Hollow hold (45 s)', 'Fr', '12', '', YT + 'shorts/YHBp6fvXYcI'],
+      ['Plancha con toques de hombro', 'Cs', '12', '', YT + 'shorts/ePIdW-pGUrA'],
+      ['Russian twists con pesa rusa', 'Cs', '123', 'kbm', YT + 'shorts/K80odVvPnDk', 1],
+      ['Press Pallof con banda', 'Cs', '123', 'ban', YT + 'watch?v=qrjDv2wGL4I'],
+      ['Hollow hold + peso (45 s)', 'Fr', '23', 'kbmm', YT + 'shorts/IR7JZPWA8oY'],
+      ['Crunch de 90 grados + peso', 'Fr', '23', 'kbmm', YT + 'watch?v=TY8NqXVCGLo', 1],
+      ['Plancha con peso (45 s)', 'Fr', '23', 'chm', YT + 'shorts/6veVg5Bs9AI', 1],
+      ['Elevación de rodillas con barra', 'Fr', '23', 'bar', YT + 'shorts/p_-7tJ2wN8U'],
+      ['Plancha estrella (45 s)', 'Cs', '3', '', YT + 'shorts/OfLBgIsyOaw', 1],
+      ['Elevación de piernas con barra', 'Fr', '3', 'bar', YT + 'shorts/61kcJvPU2zI'],
+      ['Plancha lateral con peso (45 s)', 'Cs', '3', 'kbmm', YT + 'shorts/BCnN6BFgCZM']
+    ]
+  };
+  const LIB = {}, BYKEY = {};
+  Object.entries(RAW).forEach(([cat, rows]) => {
+    LIB[cat] = rows.map(([name, m, lv, eq, url, star]) => {
+      const hs = name.match(/\((\d+) s\)/);   // timed holds are written "(45 s)" in the guide
+      const ex = { key: cat + '|' + name, cat, name, m: m.split('+'), lv: [...lv].map(Number), eq, url, star: !!star,
+                   iso: !!hs, secs: hs ? +hs[1] : 0, short: name.replace(/\s*\(\d+ s\)/, '') };
+      BYKEY[ex.key] = ex;
+      return ex;
+    });
+  });
+
+  // Distributions (sección 4.2): each column of the guide's table is one option, rows are slot order.
+  // 'Co' alone = one exercise from the Core library.
+  const TPL = {
+    push:   [['Pe+Tr', 'Co', 'HF+Tr', 'Pe', 'HF+Tr'], ['Pe+Tr', 'HF', 'Co', 'HF+Tr', 'Pe'], ['Pe+HF', 'Tr', 'Pe', 'Tr+Co', 'HF']],
+    pull:   [['Es+Bi', 'HL', 'Co', 'Es+Bi', 'HL'], ['Es+Bi', 'HL', 'Es+Co', 'Bi', 'HL'], ['Es+Bi', 'Co', 'HL+Bi', 'Es', 'HL']],
+    pierna: [['Gl+Is', 'Cu', 'Co', 'Gl+Is', 'Cu+Ge'], ['Gl+Is', 'Cu+Ge', 'Gl+Co', 'Cu', 'Gl+Is'], ['Cu+Gl', 'Ge+Co', 'Gl+Is', 'Cu', 'Gl+Is']]
+  };
+  const WARM_UPPER = 'https://www.instagram.com/reel/DdtvKa0x4_M/';
+  const WARM_LEGS = YT + 'shorts/VHkqEiJvtHQ';
+  const WARM_RETO = YT + 'shorts/kSJT7ap5quM';
+  const TYPES = {
+    push:   { label: 'Push',    mode: 'rounds', warm: WARM_UPPER },
+    pull:   { label: 'Pull',    mode: 'rounds', warm: WARM_UPPER },
+    pierna: { label: 'Pierna',  mode: 'rounds', warm: WARM_LEGS },
+    reto:   { label: 'Reto 20', mode: 'amrap',  warm: WARM_RETO, warmNote: 'Skip the last exercise in the video.' },
+    cindy:  { label: 'Cindy',   mode: 'amrap',  warm: WARM_RETO, warmNote: 'Skip the last exercise in the video.' }
+  };
+
+  // ======================================================================
+  // State
+  // ======================================================================
+  let gear = Object.assign(Object.fromEntries(GEAR.map(([k, , d]) => [k, d])), store.get('gear', {}));
+  let levels = store.get('levels', []).filter(l => l >= 0 && l <= 3);
+  let type = TYPES[store.get('type')] ? store.get('type') : 'push';
+  let hist = store.get('hist', {});
+  let routine = store.get('routine', null);
+
+  // ======================================================================
+  // Generator
+  // ======================================================================
+  const hasGear = ex => EQUIP[ex.eq][1].some(alt => alt.every(g => gear[g]));
+  const lvOk = ex => !levels.length || ex.lv.some(l => levels.includes(l));
+  const lvDist = ex => levels.length ? Math.min(...ex.lv.flatMap(a => levels.map(b => Math.abs(a - b)))) : 0;
+  const sameSet = (a, b) => a.length === b.length && a.every(x => b.includes(x));
+  const nearest = arr => { if (!arr.length) return arr; const d = Math.min(...arr.map(lvDist)); return arr.filter(e => lvDist(e) === d); };
+
+  // Pick an exercise for one slot. Tries progressively looser rules so a routine is always produced:
+  // right muscles + level + not done last time → right muscles + level → (core: other zone at level)
+  // → right muscles at the closest level → overlapping muscles.
+  function choose(slot, cat, zone, used, avoid) {
+    const free = a => a.filter(e => !used.has(e.key));
+    let tiers;
+    if (slot === 'Co') {
+      const all = free(LIB.core.filter(hasGear)), z = all.filter(e => e.m[0] === zone);
+      tiers = [z.filter(e => lvOk(e) && !avoid.has(e.key)), z.filter(lvOk),
+               all.filter(e => lvOk(e) && !avoid.has(e.key)), all.filter(lvOk), nearest(z), nearest(all)];
+    } else {
+      const want = slot.split('+'), pool = LIB[cat].filter(hasGear);
+      const exact = free(pool.filter(e => sameSet(e.m, want)));
+      const near = free(pool.filter(e => e.m.some(x => want.includes(x))));
+      tiers = [exact.filter(e => lvOk(e) && !avoid.has(e.key)), exact.filter(lvOk), nearest(exact),
+               near.filter(lvOk), nearest(near), pool];
+    }
+    const c = tiers.find(a => a.length);
+    if (!c) return null;
+    const e = pick(c);
+    const adj = !lvOk(e) ? 'level' : (slot !== 'Co' && !sameSet(e.m, slot.split('+')) ? 'muscle' : '');
+    return { key: e.key, slot, adj };
+  }
+
+  const nextOpt = t => hist[t] && hist[t].opt != null ? (hist[t].opt + 1) % 3 : Math.floor(Math.random() * 3);
+  const nextZone = () => hist.zone === 'Fr' ? 'Cs' : hist.zone === 'Cs' ? 'Fr' : pick(['Fr', 'Cs']);
+
+  function genStrength(t) {
+    const opt = nextOpt(t), zone = nextZone();
+    const used = new Set(), avoid = new Set((hist[t] && hist[t].ids) || []);
+    const items = TPL[t][opt].map(slot => {
+      const it = choose(slot, t, zone, used, avoid);
+      used.add(it.key);
+      return it;
+    });
+    return { type: t, opt, zone, items };
+  }
+
+  // Reto 20: one Pull, one Push, one Pierna exercise. Reps follow the guide's own example order
+  // (5 pull, 10 push, 15 pierna). A timed hold gets its seconds from the guide instead of reps.
+  const RETO_REPS = { pull: 5, push: 10, pierna: 15 };
+  function pickReto(cat, used, avoid) {
+    const pool = LIB[cat].filter(e => hasGear(e) && !used.has(e.key));
+    const c = [pool.filter(e => lvOk(e) && !avoid.has(e.key)), pool.filter(lvOk), nearest(pool)].find(a => a.length);
+    const e = pick(c);
+    return Object.assign({ key: e.key, slot: cat, adj: lvOk(e) ? '' : 'level' },
+      e.iso ? { secs: e.secs } : { reps: RETO_REPS[cat] });
+  }
+  function genReto() {
+    const avoid = new Set((hist.reto && hist.reto.ids) || []), used = new Set();
+    return { type: 'reto', items: ['pull', 'push', 'pierna'].map(cat => pickReto(cat, used, avoid)) };
+  }
+  const genCindy = () => ({ type: 'cindy', items: [
+    { key: 'pull|Dominada', reps: 5 }, { key: 'push|Flexión normal', reps: 10 }, { key: 'pierna|Sentadilla', reps: 15 }
+  ] });
+
+  function generate() {
+    routine = type === 'cindy' ? genCindy() : type === 'reto' ? genReto() : genStrength(type);
+    store.set('routine', routine);
+  }
+  function swapItem(i) {
+    const it = routine.items[i], used = new Set(routine.items.map(x => x.key));
+    const n = routine.type === 'reto' ? pickReto(it.slot, used, new Set()) : choose(it.slot, routine.type, routine.zone, used, new Set());
+    if (!n) return;
+    routine.items[i] = n;
+    store.set('routine', routine);
+    build(); render();
+  }
+  function commit() {
+    if (routine.committed) return;
+    routine.committed = true;
+    hist[routine.type] = { opt: routine.opt, ids: routine.items.map(i => i.key) };
+    if (routine.zone && routine.items.some(i => i.slot === 'Co')) hist.zone = routine.zone;
+    store.set('hist', hist); store.set('routine', routine);
+  }
+  const validRoutine = r => r && TYPES[r.type] && Array.isArray(r.items) && r.items.length && r.items.every(i => BYKEY[i.key]);
+
+  // ======================================================================
+  // Setup UI
+  // ======================================================================
+  function renderSetup() {
+    $('types').innerHTML = Object.entries(TYPES).map(([k, t]) =>
+      '<button data-t="' + k + '" class="' + (k === type ? 'on' : '') + '">' + t.label + '</button>').join('');
+    $('levels').innerHTML = LEVELS.map((l, i) =>
+      '<button data-l="' + i + '" class="' + (levels.includes(i) ? 'on' : '') + '"><i style="background:var(--l' + i + ')"></i>' + l + '</button>').join('');
+    $('levels').hidden = type === 'cindy';
+    $('hint').textContent = type === 'cindy' ? 'Cindy is always 5 pull-ups, 10 push-ups and 15 squats.'
+      : levels.length ? 'Picking from: ' + levels.slice().sort().map(i => LEVELS[i]).join(', ')
+      : 'No level selected, so any level can come up.';
+  }
+  function renderGear() {
+    $('gear').innerHTML = GEAR.map(([k, label]) =>
+      '<label><input type="checkbox" data-g="' + k + '"' + (gear[k] ? ' checked' : '') + '>' + esc(label) + '</label>').join('');
+  }
+
+  // ======================================================================
+  // Timer (adapted from the reference Workout Timer)
+  // ======================================================================
+  let EX = [], MODE = 'rounds', WORK = 240000, REST = 10000, LEAD = 10000, TOTAL_MIN = 20;
+  let segs = [], TOTAL = 0, rounds = 0;
+  const R = 100, C = 2 * Math.PI * R;
+  const arc = $('arc'); arc.style.strokeDasharray = C;
+
+  let running = false, finished = false, elapsed = 0, startPerf = 0;
+  let ctx = null, scheduled = [], lastSeg = -1, tick = null;
+
+  const fmt = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  const clampInt = (v, lo, hi, d) => { const n = parseInt(v, 10); return isNaN(n) ? d : Math.max(lo, Math.min(hi, n)); };
+  const inSession = () => (running || elapsed > 0) && !finished;
+  const qty = it => it.reps ? it.reps + ' ×' : it.secs ? it.secs + ' s' : '';
+  const exLabel = (it, ex) => (qty(it) ? qty(it) + ' ' : '') + (it.secs ? ex.short : ex.name);
+
+  function readSettings() {
+    TOTAL_MIN = clampInt($('inTotal').value, 1, 120, 20);
+    REST = clampInt($('inRest').value, 0, 300, 10) * 1000;
+    LEAD = clampInt($('inLead').value, 0, 120, 10) * 1000;
+    store.set('timer', { total: TOTAL_MIN, rest: REST / 1000, lead: LEAD / 1000 });
+  }
+
+  const ICON_PLAY = '<svg viewBox="0 0 16 16"><path d="M4 2.5v11l9.5-5.5z"/></svg>';
+  const ICON_SWAP = '<svg viewBox="0 0 16 16"><path d="M8 2.5a5.5 5.5 0 0 1 5.2 3.7l1.3-.9-.4 4-3.6-1.7 1.3-.8A3.8 3.8 0 0 0 4.4 6.4L2.9 5.6A5.5 5.5 0 0 1 8 2.5zM2.7 6.7l3.6 1.7-1.3.8a3.8 3.8 0 0 0 7.4.6l1.5.8A5.5 5.5 0 0 1 2.8 9.8l-1.3.9z"/></svg>';
+
+  function embedOf(url) {
+    let m;
+    if ((m = url.match(/youtube\.com\/shorts\/([\w-]+)/))) return { src: 'https://www.youtube.com/embed/' + m[1] + '?playsinline=1&rel=0', cls: 'tall' };
+    if ((m = url.match(/youtube\.com\/watch\?v=([\w-]+)/))) {
+      const t = url.match(/[?&]t=(\d+)/);
+      return { src: 'https://www.youtube.com/embed/' + m[1] + '?playsinline=1&rel=0' + (t ? '&start=' + t[1] : ''), cls: '' };
+    }
+    if ((m = url.match(/instagram\.com\/reel\/([\w-]+)/))) return { src: 'https://www.instagram.com/reel/' + m[1] + '/embed', cls: 'ig' };
+    return null;
+  }
+
+  function renderList() {
+    const canSwap = routine.type !== 'cindy';
+    $('list').innerHTML = routine.items.map((it, i) => {
+      const ex = BYKEY[it.key];
+      const tags = ex.m.map(m => '<span class="tag">' + MUSCLES[m] + '</span>').join('');
+      const dots = '<span class="dots" title="' + ex.lv.map(l => LEVELS[l]).join(', ') + '">' +
+        [0, 1, 2, 3].map(l => '<i class="' + (ex.lv.includes(l) ? 'l' + l : '') + '"></i>').join('') + '</span>';
+      const adj = it.adj === 'level' ? '<div class="adj">Nothing fit your level here; this is the closest one.</div>'
+        : it.adj === 'muscle' ? '<div class="adj">Nothing matched this slot exactly; this works some of the same muscles.</div>' : '';
+      const emb = embedOf(ex.url);
+      const vid = emb ? '<button class="ib yt vid" data-i="' + i + '" aria-label="Show video">' + ICON_PLAY + '</button>'
+        : '<a class="ib yt" href="' + esc(ex.url) + '" target="_blank" rel="noopener" aria-label="Open video">' + ICON_PLAY + '</a>';
+      const swap = canSwap ? '<button class="ib swap" data-i="' + i + '" aria-label="Swap exercise">' + ICON_SWAP + '</button>' : '';
+      return '<li><div class="row"><span class="n">' + (i + 1) + '</span><div class="ex">' +
+        '<div class="exname">' + (qty(it) ? '<span class="reps">' + qty(it) + '</span> ' : '') + esc(it.secs ? ex.short : ex.name) +
+        (ex.star ? ' <span class="star" title="Recomendado en la guía">★</span>' : '') + '</div>' +
+        '<div class="meta">' + tags + dots + '<span>' + esc(EQUIP[ex.eq][0]) + '</span></div>' + adj +
+        '</div>' + vid + swap + '</div><div class="video" hidden></div></li>';
+    }).join('');
+
+    const t = TYPES[routine.type];
+    $('rtitle').textContent = t.label;
+    $('rsub').textContent = MODE === 'amrap'
+      ? fmt(WORK) + ' · as many rounds as possible'
+      : 'Opción ' + (routine.opt + 1) + ' · ' + EX.length + ' × ' + fmt(WORK) + (REST ? ' · ' + (REST / 1000) + ' s breaks' : '');
+    $('newBtn').hidden = routine.type === 'cindy';
+    $('warm').innerHTML = 'Warm up for 2–3 min first (not part of the timer): <a href="' + t.warm +
+      '" target="_blank" rel="noopener">warm-up video</a>.' + (t.warmNote ? ' ' + t.warmNote : '');
+  }
+
+  function build() {
+    MODE = TYPES[routine.type].mode;
+    EX = routine.items.map(it => BYKEY[it.key]);
+    WORK = MODE === 'amrap' ? TOTAL_MIN * 60000 : Math.max(1, Math.round(TOTAL_MIN * 60 / EX.length)) * 1000;
+    segs = []; let t = 0;
+    if (LEAD > 0) { segs.push({ kind: 'lead', start: t, dur: LEAD, i: 0 }); t += LEAD; }
+    if (MODE === 'amrap') {
+      segs.push({ kind: 'work', start: t, dur: WORK, i: 0, last: true }); t += WORK;
+    } else {
+      EX.forEach((ex, i) => {
+        segs.push({ kind: 'work', start: t, dur: WORK, i, last: i === EX.length - 1 }); t += WORK;
+        if (i < EX.length - 1 && REST > 0) { segs.push({ kind: 'rest', start: t, dur: REST, i: i + 1 }); t += REST; }
+      });
+    }
+    TOTAL = t;
+    $('counter').hidden = MODE !== 'amrap';
+    renderList();
+    cancelHold();
+    document.title = '20 Mins al Día — ' + TYPES[routine.type].label;
+  }
+
+  // ---------- audio (unchanged from the reference) ----------
+  function getAudio() {
+    // iPhone Safari: play timer sounds even when the ring/silent switch is on silent.
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    if (!ctx) { const AC = window.AudioContext || window.webkitAudioContext; ctx = new AC(); }
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  function beepAt(t, freq, dur, vol = 0.5, list = scheduled) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'square'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.01);
+    g.gain.setValueAtTime(vol, t + dur - 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(ctx.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+    list.push(o);
+  }
+  let shaperCurve = null;
+  function getCurve() {
+    if (shaperCurve) return shaperCurve;
+    const n = 1024; shaperCurve = new Float32Array(n);
+    for (let i = 0; i < n; i++) { const x = i * 2 / n - 1; shaperCurve[i] = Math.tanh(3 * x); }
+    return shaperCurve;
+  }
+  // Old-car klaxon: "a-WOOO" pitch sweep up, short break, then "GA".
+  function awoogaAt(t, vol = 0.45, list = scheduled) {
+    const out = ctx.createGain();
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200; lp.Q.value = 4;
+    const sh = ctx.createWaveShaper(); sh.curve = getCurve();
+    sh.connect(lp).connect(out).connect(ctx.destination);
+    const g = out.gain;
+    g.setValueAtTime(0.0001, t);
+    g.exponentialRampToValueAtTime(vol, t + 0.04);
+    g.setValueAtTime(vol, t + 0.62);
+    g.exponentialRampToValueAtTime(vol * 0.15, t + 0.66);
+    g.exponentialRampToValueAtTime(vol, t + 0.70);
+    g.setValueAtTime(vol, t + 0.86);
+    g.exponentialRampToValueAtTime(0.0001, t + 0.98);
+    [[1, 'sawtooth'], [1.007, 'square'], [0.5, 'sawtooth']].forEach(([mult, type]) => {
+      const o = ctx.createOscillator(); o.type = type;
+      const f = o.frequency;
+      f.setValueAtTime(150 * mult, t);
+      f.exponentialRampToValueAtTime(430 * mult, t + 0.5);
+      f.setValueAtTime(430 * mult, t + 0.62);
+      f.exponentialRampToValueAtTime(360 * mult, t + 0.95);
+      const og = ctx.createGain(); og.gain.value = mult === 0.5 ? 0.5 : 0.35;
+      o.connect(og).connect(sh);
+      o.start(t); o.stop(t + 1.0);
+      list.push(o);
+    });
+  }
+  function scheduleAlarms() {
+    cancelAlarms();
+    if (!ctx) return;
+    const el = running ? performance.now() - startPerf : elapsed;
+    const now = ctx.currentTime, base = now - el / 1000;
+    const at = (t, fn) => { if (t > now + 0.02) fn(t); };
+    segs.forEach(sg => {
+      const end = base + (sg.start + sg.dur) / 1000;
+      if (sg.kind === 'work') {
+        if (sg.last) { for (let k = 0; k < 3; k++) at(end + k * 1.15, t => awoogaAt(t)); }
+        else at(end, t => awoogaAt(t));
+      } else {
+        const durS = sg.dur / 1000;
+        for (let s = 3; s >= 1; s--) if (s < durS) at(end - s, t => beepAt(t, 600, 0.1, 0.3));
+        at(end, t => beepAt(t, 1320, 0.45));
+      }
+    });
+  }
+  function cancelAlarms() {
+    scheduled.forEach(o => { try { o.stop(0); o.disconnect(); } catch (e) {} });
+    scheduled = [];
+  }
+
+  // ---------- hold timer for timed holds in Reto 20 ----------
+  // Tap the button: 5 s to get in position (three ticks and the "go" beep), then the hold,
+  // then the horn. It runs on its own clock, alongside the 20-minute countdown.
+  const HOLD_READY = 5000;
+  let hold = null, holdSched = [], holdTick = null;
+  const holdItem = () => MODE === 'amrap' && routine ? routine.items.find(it => it.secs) : null;
+  function holdState() {
+    if (!hold) return null;
+    const t = performance.now() - hold.start;
+    if (t < HOLD_READY) return { phase: 'ready', left: HOLD_READY - t };
+    if (t < HOLD_READY + hold.dur) return { phase: 'hold', left: HOLD_READY + hold.dur - t };
+    return null;
+  }
+  function scheduleHold() {
+    cancelHoldSounds();
+    if (!hold || !ctx) return;
+    const now = ctx.currentTime, go = now + (hold.start + HOLD_READY - performance.now()) / 1000, end = go + hold.dur / 1000;
+    const at = (t, fn) => { if (t > now + 0.02) fn(t); };
+    for (let s = 3; s >= 1; s--) at(go - s, t => beepAt(t, 600, 0.1, 0.3, holdSched));
+    at(go, t => beepAt(t, 1320, 0.45, 0.5, holdSched));
+    at(end, t => awoogaAt(t, 0.45, holdSched));
+  }
+  function cancelHoldSounds() {
+    holdSched.forEach(o => { try { o.stop(0); o.disconnect(); } catch (e) {} });
+    holdSched = [];
+  }
+  function startHold() {
+    const it = holdItem(); if (!it) return;
+    getAudio();
+    hold = { start: performance.now(), dur: it.secs * 1000 };
+    scheduleHold();
+    clearInterval(holdTick); holdTick = setInterval(renderHold, 100);
+    renderHold();
+  }
+  function cancelHold() {
+    hold = null; cancelHoldSounds();
+    clearInterval(holdTick); holdTick = null;
+    renderHold();
+  }
+  function renderHold() {
+    $('holdRow').hidden = !holdItem();
+    if (hold && !holdState()) {   // finished on its own; leave the horn playing
+      hold = null; holdSched = []; clearInterval(holdTick); holdTick = null; flash();
+    }
+    render();
+  }
+  function paintHold() {   // called from render() so the button and the ring text change together
+    const it = holdItem(); if (!it) return;
+    const st = holdState(), btn = $('holdBtn');
+    btn.textContent = st ? 'Stop hold' : 'Start ' + it.secs + ' s hold';
+    btn.className = 'hold' + (st ? ' is-' + st.phase : '');
+  }
+
+  // ---------- keep the phone screen on while the timer runs ----------
+  let wakeLock = null;
+  async function lockScreen() {
+    try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch (e) {}
+  }
+  function unlockScreen() { try { if (wakeLock) wakeLock.release(); } catch (e) {} wakeLock = null; }
+
+  // ---------- display ----------
+  function flash() { document.body.classList.add('flash'); setTimeout(() => document.body.classList.remove('flash'), 600); }
+
+  function render() {
+    const total = running ? performance.now() - startPerf : elapsed;
+    if (total >= TOTAL && running) { running = false; finished = true; elapsed = TOTAL; stopTick(); unlockScreen(); flash(); cancelHold(); }
+    const t = Math.min(total, TOTAL);
+    let idx = finished ? segs.length : segs.findIndex(sg => t >= sg.start && t < sg.start + sg.dur);
+    if (idx < 0) idx = segs.length;
+    const sg = segs[idx];
+
+    if (running && idx > lastSeg && lastSeg >= 0) flash();
+    lastSeg = idx;
+
+    $('ring').className = 'ring ' + (sg ? sg.kind : 'done');
+    document.body.classList.toggle('session', inSession());
+
+    let remain = 0, frac = 1;
+    if (sg) { remain = sg.start + sg.dur - t; frac = remain / sg.dur; }
+
+    const first = exLabel(routine.items[0], EX[0]);
+    if (!sg) {
+      $('label').innerHTML = '<b>Done</b>';
+      $('name').textContent = MODE === 'amrap' && rounds ? rounds + (rounds === 1 ? ' round' : ' rounds') + ' 💪' : 'Workout complete 💪';
+    } else if (sg.kind === 'lead') {
+      $('label').innerHTML = (running || elapsed > 0) ? '<b>Get ready</b>' : 'Press start';
+      $('name').textContent = 'First: ' + first;
+    } else if (sg.kind === 'rest') {
+      $('label').innerHTML = '<b>Break</b>';
+      $('name').textContent = 'Next: ' + EX[sg.i].name;
+    } else if (MODE === 'amrap') {
+      $('label').innerHTML = '<b>AMRAP</b>';
+      $('name').textContent = 'As many rounds as possible';
+    } else {
+      $('label').innerHTML = 'Exercise <b>' + (sg.i + 1) + '</b> of <b>' + EX.length + '</b>';
+      $('name').textContent = EX[sg.i].name;
+    }
+    let sub = MODE === 'amrap' && sg && sg.kind === 'work' ? '' : 'Total left ' + fmt(TOTAL - t);
+    const hs = holdState(), hi = holdItem();
+    if (hs && hi) {   // a hold is running: the big clock and ring follow it, and the 20-minute clock moves to the small line
+      const ready = hs.phase === 'ready';
+      remain = hs.left; frac = hs.left / (ready ? HOLD_READY : hold.dur);
+      $('ring').className = 'ring ' + (ready ? 'lead' : 'work');
+      $('label').innerHTML = ready ? '<b>Get ready</b>' : '<b>Hold</b>';
+      $('name').textContent = BYKEY[hi.key].short;
+      sub = running ? 'Total left ' + fmt(TOTAL - t) : 'Main timer is not running';
+    }
+    $('time').textContent = fmt(remain);
+    $('sub').textContent = sub;
+    paintHold();
+    arc.style.strokeDashoffset = C * (1 - frac);
+
+    const working = !!sg && sg.kind === 'work';
+    const doneCount = !sg ? EX.length : MODE === 'amrap' ? 0 : sg.i;
+    [...$('list').children].forEach((li, i) => {
+      li.classList.toggle('done', i < doneCount);
+      li.classList.toggle('current', working && (MODE === 'amrap' || i === sg.i));
+    });
+
+    $('rounds').textContent = rounds;
+    $('decBtn').disabled = rounds === 0;
+
+    const sb = $('startBtn');
+    sb.textContent = finished ? 'Restart' : running ? 'Pause' : (elapsed > 0 ? 'Resume' : 'Start');
+    sb.classList.toggle('running', running);
+    sb.classList.toggle('paused', !running && !finished && elapsed > 0);
+    ['inTotal', 'inRest', 'inLead'].forEach(id => { $(id).disabled = inSession(); });
+  }
+
+  function startTick() {
+    stopTick();
+    tick = setInterval(render, 100);
+    const raf = () => { if (running) { render(); requestAnimationFrame(raf); } };
+    requestAnimationFrame(raf);
+  }
+  function stopTick() { if (tick) clearInterval(tick); tick = null; }
+
+  function start() {
+    getAudio();
+    if (finished) reset();
+    if (elapsed === 0) commit();
+    running = true;
+    startPerf = performance.now() - elapsed;
+    if (lastSeg < 0) lastSeg = 0;
+    scheduleAlarms(); startTick(); lockScreen(); render();
+  }
+  function pause() {
+    elapsed = performance.now() - startPerf;
+    running = false; cancelAlarms(); cancelHold(); stopTick(); unlockScreen(); render();
+  }
+  function reset() {
+    running = false; finished = false; elapsed = 0; lastSeg = -1; rounds = 0;
+    cancelAlarms(); cancelHold(); stopTick(); unlockScreen(); render();
+  }
+  function skip() {
+    const t = running ? performance.now() - startPerf : elapsed;
+    const sg = segs.find(s => t >= s.start && t < s.start + s.dur);
+    if (!sg) return;
+    elapsed = sg.start + sg.dur;
+    if (running) { startPerf = performance.now() - elapsed; scheduleAlarms(); }
+    render();
+  }
+  function newRoutine() { generate(); build(); reset(); }
+
+  // ======================================================================
+  // Events
+  // ======================================================================
+  $('types').onclick = e => {
+    const b = e.target.closest('button[data-t]'); if (!b || inSession()) return;
+    type = b.dataset.t; store.set('type', type);
+    renderSetup(); newRoutine();
+  };
+  $('levels').onclick = e => {
+    const b = e.target.closest('button[data-l]'); if (!b || inSession()) return;
+    const l = +b.dataset.l;
+    levels = levels.includes(l) ? levels.filter(x => x !== l) : levels.concat(l);
+    store.set('levels', levels);
+    renderSetup(); newRoutine();
+  };
+  $('gear').onchange = e => {
+    const g = e.target.dataset.g; if (!g) return;
+    gear[g] = e.target.checked; store.set('gear', gear);
+    if (!inSession()) newRoutine();
+  };
+  $('list').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const i = +b.dataset.i;
+    if (b.classList.contains('swap')) { swapItem(i); return; }
+    if (b.classList.contains('vid')) {
+      const box = b.closest('li').querySelector('.video');
+      if (!box.firstChild) {
+        const url = EX[i].url, emb = embedOf(url);
+        box.className = 'video ' + emb.cls;
+        box.innerHTML = '<iframe src="' + esc(emb.src) + '" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" ' +
+          'allowfullscreen referrerpolicy="strict-origin-when-cross-origin" loading="lazy" title="' + esc(EX[i].name) + '"></iframe>' +
+          '<a href="' + esc(url) + '" target="_blank" rel="noopener">Open in a new tab ↗</a>';
+      }
+      box.hidden = !box.hidden;
+      b.classList.toggle('open', !box.hidden);
+    }
+  };
+  ['inTotal', 'inRest', 'inLead'].forEach(id => $(id).onchange = () => { if (inSession()) return; readSettings(); build(); reset(); });
+  $('newBtn').onclick = () => { if (!inSession()) newRoutine(); };
+  $('startBtn').onclick = () => running ? pause() : start();
+  $('resetBtn').onclick = reset;
+  $('skipBtn').onclick = skip;
+  $('incBtn').onclick = () => { rounds++; render(); };
+  $('decBtn').onclick = () => { rounds = Math.max(0, rounds - 1); render(); };
+  $('holdBtn').onclick = () => hold ? cancelHold() : startHold();
+  $('testBtn').onclick = () => { getAudio(); awoogaAt(ctx.currentTime + 0.05); };
+  document.addEventListener('keydown', e => {
+    if (e.code === 'Space' && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) { e.preventDefault(); $('startBtn').click(); }
+  });
+  // Coming back to the tab: re-acquire the screen lock and re-sync the sounds.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' || !(running || hold)) return;
+    if (running) lockScreen();
+    if (ctx) Promise.resolve(ctx.state === 'suspended' ? ctx.resume() : null)
+      .then(() => { if (running) scheduleAlarms(); if (hold) scheduleHold(); }).catch(() => {});
+  });
+
+  // ======================================================================
+  // Init
+  // ======================================================================
+  const saved = store.get('timer', null);
+  if (saved) { $('inTotal').value = saved.total; $('inRest').value = saved.rest; $('inLead').value = saved.lead; }
+  readSettings();
+  renderSetup(); renderGear();
+  if (!validRoutine(routine) || routine.type !== type) generate();
+  build(); render();
+})();
+</script>
+</body>
+</html>
