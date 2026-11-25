@@ -159,6 +159,11 @@
   .settings .row2 { grid-column: 1 / -1; display: flex; gap: 10px; justify-content: center; margin-top: 4px; }
   .settings .row2 button { padding: 9px 16px; font-size: 14px; border-radius: 999px; font-weight: 600; }
   .note { margin-top: 12px; font-size: 12px; line-height: 1.55; }
+
+  /* ---------- desktop browsers: the whole layout at 1.35x (460px column -> 621px) ---------- */
+  @media (min-width: 760px) and (hover: hover) and (pointer: fine) {
+    .wrap { zoom: 1.35; }
+  }
 </style>
 </head>
 <body>
@@ -215,13 +220,13 @@
       Push, Pull and Pierna split the total time evenly across the 5 exercises, with a short break between them.
       Reto 20 and Cindy are one countdown for the whole time.
       When Reto 20 includes a timed hold, a hold button appears under the round counter. Tap it each round:
-      you get 5 s to get in position (three ticks and the &ldquo;go&rdquo; beep), then the hold counts down and the horn sounds when it ends.
+      you get 5 s to get in position (three ticks and the &ldquo;go&rdquo; beep), then the hold counts down, with three ticks and the horn when it ends.
       While a hold runs, the big clock shows the hold and the 20-minute time moves to the small line under it.
       Pausing or resetting the main timer stops the hold.
       Each strength day uses the next of the guide's 3 distributions for that day and avoids the exercises you did last time;
       that history is saved when you press Start.
-      The lead-in and each break end with three ticks and a high &ldquo;go&rdquo; beep. An &ldquo;awooga&rdquo; horn sounds when each
-      exercise ends, and three in a row at the very end. Space bar starts and pauses.
+      The lead-in and each break end with three ticks and a high &ldquo;go&rdquo; beep. Each exercise ends with three ticks and an
+      &ldquo;awooga&rdquo; horn, and the last one gets three horns in a row. Space bar starts and pauses.
     </div>
   </details>
 </div>
@@ -666,15 +671,13 @@
     const now = ctx.currentTime, base = now - el / 1000;
     const at = (t, fn) => { if (t > now + 0.02) fn(t); };
     segs.forEach(sg => {
-      const end = base + (sg.start + sg.dur) / 1000;
+      const end = base + (sg.start + sg.dur) / 1000, durS = sg.dur / 1000;
+      // Every segment (lead-in, exercise, break) gets three ticks in its last 3 seconds.
+      for (let s = 3; s >= 1; s--) if (s < durS) at(end - s, t => beepAt(t, 600, 0.1, 0.3));
       if (sg.kind === 'work') {
         if (sg.last) { for (let k = 0; k < 3; k++) at(end + k * 1.15, t => awoogaAt(t)); }
         else at(end, t => awoogaAt(t));
-      } else {
-        const durS = sg.dur / 1000;
-        for (let s = 3; s >= 1; s--) if (s < durS) at(end - s, t => beepAt(t, 600, 0.1, 0.3));
-        at(end, t => beepAt(t, 1320, 0.45));
-      }
+      } else at(end, t => beepAt(t, 1320, 0.45));
     });
   }
   function cancelAlarms() {
@@ -702,6 +705,7 @@
     const at = (t, fn) => { if (t > now + 0.02) fn(t); };
     for (let s = 3; s >= 1; s--) at(go - s, t => beepAt(t, 600, 0.1, 0.3, holdSched));
     at(go, t => beepAt(t, 1320, 0.45, 0.5, holdSched));
+    for (let s = 3; s >= 1; s--) if (s < hold.dur / 1000) at(end - s, t => beepAt(t, 600, 0.1, 0.3, holdSched));
     at(end, t => awoogaAt(t, 0.45, holdSched));
   }
   function cancelHoldSounds() {
