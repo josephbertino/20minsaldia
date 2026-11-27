@@ -144,7 +144,7 @@
   /* ---------- settings ---------- */
   details { margin-top: 26px; color: var(--muted); font-size: 14px; }
   summary { cursor: pointer; text-align: center; }
-  .settings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  .settings { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; }
   .settings label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
   .settings input[type=number] {
     width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--ring-bg);
@@ -210,7 +210,6 @@
     <summary>Settings, equipment &amp; sound test</summary>
     <div class="settings">
       <label>Total (min)<input id="inTotal" type="number" min="1" max="120" value="20"></label>
-      <label>Break (s)<input id="inRest" type="number" min="0" max="300" value="40" autocomplete="off"></label>
       <label>Lead-in (s)<input id="inLead" type="number" min="0" max="120" value="10"></label>
       <h4>Equipment I have</h4>
       <div class="gear" id="gear"></div>
@@ -525,8 +524,9 @@
   // ======================================================================
   // Timer (adapted from the reference Workout Timer)
   // ======================================================================
-  let EX = [], MODE = 'rounds', WORK = 240000, REST = 10000, LEAD = 10000, TOTAL_MIN = 20;
+  let EX = [], MODE = 'rounds', WORK = 240000, LEAD = 10000, TOTAL_MIN = 20;
   let segs = [], TOTAL = 0, rounds = 0;
+  const REST = 40000;   // break between exercises, fixed at 40 s
   const R = 100, C = 2 * Math.PI * R;
   const arc = $('arc'); arc.style.strokeDasharray = C;
 
@@ -541,9 +541,8 @@
 
   function readSettings() {
     TOTAL_MIN = clampInt($('inTotal').value, 1, 120, 20);
-    REST = clampInt($('inRest').value, 0, 300, 40) * 1000;
     LEAD = clampInt($('inLead').value, 0, 120, 10) * 1000;
-    store.set('timer', { total: TOTAL_MIN, lead: LEAD / 1000 });   // the break is not saved: it starts at 40 s on every load
+    store.set('timer', { total: TOTAL_MIN, lead: LEAD / 1000 });
   }
 
   const ICON_PLAY = '<svg viewBox="0 0 16 16"><path d="M4 2.5v11l9.5-5.5z"/></svg>';
@@ -812,7 +811,7 @@
     sb.textContent = finished ? 'Restart' : running ? 'Pause' : (elapsed > 0 ? 'Resume' : 'Start');
     sb.classList.toggle('running', running);
     sb.classList.toggle('paused', !running && !finished && elapsed > 0);
-    ['inTotal', 'inRest', 'inLead'].forEach(id => { $(id).disabled = inSession(); });
+    ['inTotal', 'inLead'].forEach(id => { $(id).disabled = inSession(); });
   }
 
   function startTick() {
@@ -887,7 +886,7 @@
       b.classList.toggle('open', !box.hidden);
     }
   };
-  ['inTotal', 'inRest', 'inLead'].forEach(id => $(id).onchange = () => { if (inSession()) return; readSettings(); build(); reset(); });
+  ['inTotal', 'inLead'].forEach(id => $(id).onchange = () => { if (inSession()) return; readSettings(); build(); reset(); });
   $('newBtn').onclick = () => { if (!inSession()) newRoutine(); };
   $('startBtn').onclick = () => running ? pause() : start();
   $('resetBtn').onclick = reset;
