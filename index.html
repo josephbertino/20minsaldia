@@ -210,7 +210,7 @@
     <summary>Settings, equipment &amp; sound test</summary>
     <div class="settings">
       <label>Total (min)<input id="inTotal" type="number" min="1" max="120" value="20"></label>
-      <label>Break (s)<input id="inRest" type="number" min="0" max="300" value="10"></label>
+      <label>Break (s)<input id="inRest" type="number" min="0" max="300" value="40"></label>
       <label>Lead-in (s)<input id="inLead" type="number" min="0" max="120" value="10"></label>
       <h4>Equipment I have</h4>
       <div class="gear" id="gear"></div>
@@ -541,9 +541,9 @@
 
   function readSettings() {
     TOTAL_MIN = clampInt($('inTotal').value, 1, 120, 20);
-    REST = clampInt($('inRest').value, 0, 300, 10) * 1000;
+    REST = clampInt($('inRest').value, 0, 300, 40) * 1000;
     LEAD = clampInt($('inLead').value, 0, 120, 10) * 1000;
-    store.set('timer', { total: TOTAL_MIN, rest: REST / 1000, lead: LEAD / 1000 });
+    store.set('timer', { total: TOTAL_MIN, rest: REST / 1000, lead: LEAD / 1000, v: 2 });
   }
 
   const ICON_PLAY = '<svg viewBox="0 0 16 16"><path d="M4 2.5v11l9.5-5.5z"/></svg>';
@@ -911,6 +911,8 @@
   // Init
   // ======================================================================
   const saved = store.get('timer', null);
+  // The default break went from 10 s to 40 s. Settings saved before that (no v) still hold 10 s, so move them once.
+  if (saved && !saved.v && saved.rest === 10) saved.rest = 40;
   if (saved) { $('inTotal').value = saved.total; $('inRest').value = saved.rest; $('inLead').value = saved.lead; }
   readSettings();
   renderSetup(); renderGear();
