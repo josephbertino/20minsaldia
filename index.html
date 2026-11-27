@@ -146,10 +146,6 @@
   summary { cursor: pointer; text-align: center; }
   .settings { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; }
   .settings label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
-  .settings input[type=number] {
-    width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--ring-bg);
-    background: var(--panel); color: var(--text); font: inherit; font-size: 15px; text-align: center;
-  }
   .settings .wide { grid-column: 1 / -1; }
   .settings h4 { grid-column: 1 / -1; margin: 8px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
   .gear { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 12px; }
@@ -207,17 +203,15 @@
   <div class="warm" id="warm"></div>
 
   <details>
-    <summary>Settings, equipment &amp; sound test</summary>
+    <summary>Equipment &amp; sound test</summary>
     <div class="settings">
-      <label>Total (min)<input id="inTotal" type="number" min="1" max="120" value="20"></label>
-      <label>Lead-in (s)<input id="inLead" type="number" min="0" max="120" value="10"></label>
       <h4>Equipment I have</h4>
       <div class="gear" id="gear"></div>
       <div class="row2"><button id="testBtn">Test sound</button></div>
     </div>
     <div class="note">
-      Push, Pull and Pierna split the total time evenly across the 5 exercises, with a short break between them.
-      Reto 20 and Cindy are one countdown for the whole time.
+      Every workout starts with a 10 s lead-in. Push, Pull and Pierna split the 20 minutes evenly across the 5 exercises
+      (4 minutes each), with a 40 s break between them. Reto 20 and Cindy are one 20-minute countdown.
       When Reto 20 includes a timed hold, a hold button appears under the round counter. Tap it each round:
       you get 5 s to get in position (three ticks and the &ldquo;go&rdquo; beep), then the hold counts down, with three ticks and the horn when it ends.
       While a hold runs, the big clock shows the hold and the 20-minute time moves to the small line under it.
@@ -524,9 +518,11 @@
   // ======================================================================
   // Timer (adapted from the reference Workout Timer)
   // ======================================================================
-  let EX = [], MODE = 'rounds', WORK = 240000, LEAD = 10000, TOTAL_MIN = 20;
+  let EX = [], MODE = 'rounds', WORK = 240000;
   let segs = [], TOTAL = 0, rounds = 0;
+  const TOTAL_MIN = 20; // workout length in minutes, fixed
   const REST = 40000;   // break between exercises, fixed at 40 s
+  const LEAD = 10000;   // get-ready countdown before the first exercise, fixed at 10 s
   const R = 100, C = 2 * Math.PI * R;
   const arc = $('arc'); arc.style.strokeDasharray = C;
 
@@ -534,16 +530,9 @@
   let ctx = null, scheduled = [], lastSeg = -1, tick = null;
 
   const fmt = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
-  const clampInt = (v, lo, hi, d) => { const n = parseInt(v, 10); return isNaN(n) ? d : Math.max(lo, Math.min(hi, n)); };
   const inSession = () => (running || elapsed > 0) && !finished;
   const qty = it => it.reps ? it.reps + ' ×' : it.secs ? it.secs + ' s' : '';
   const exLabel = (it, ex) => (qty(it) ? qty(it) + ' ' : '') + (it.secs ? ex.short : ex.name);
-
-  function readSettings() {
-    TOTAL_MIN = clampInt($('inTotal').value, 1, 120, 20);
-    LEAD = clampInt($('inLead').value, 0, 120, 10) * 1000;
-    store.set('timer', { total: TOTAL_MIN, lead: LEAD / 1000 });
-  }
 
   const ICON_PLAY = '<svg viewBox="0 0 16 16"><path d="M4 2.5v11l9.5-5.5z"/></svg>';
   const ICON_SWAP = '<svg viewBox="0 0 16 16"><path d="M8 2.5a5.5 5.5 0 0 1 5.2 3.7l1.3-.9-.4 4-3.6-1.7 1.3-.8A3.8 3.8 0 0 0 4.4 6.4L2.9 5.6A5.5 5.5 0 0 1 8 2.5zM2.7 6.7l3.6 1.7-1.3.8a3.8 3.8 0 0 0 7.4.6l1.5.8A5.5 5.5 0 0 1 2.8 9.8l-1.3.9z"/></svg>';
@@ -811,7 +800,6 @@
     sb.textContent = finished ? 'Restart' : running ? 'Pause' : (elapsed > 0 ? 'Resume' : 'Start');
     sb.classList.toggle('running', running);
     sb.classList.toggle('paused', !running && !finished && elapsed > 0);
-    ['inTotal', 'inLead'].forEach(id => { $(id).disabled = inSession(); });
   }
 
   function startTick() {
@@ -886,7 +874,6 @@
       b.classList.toggle('open', !box.hidden);
     }
   };
-  ['inTotal', 'inLead'].forEach(id => $(id).onchange = () => { if (inSession()) return; readSettings(); build(); reset(); });
   $('newBtn').onclick = () => { if (!inSession()) newRoutine(); };
   $('startBtn').onclick = () => running ? pause() : start();
   $('resetBtn').onclick = reset;
@@ -909,9 +896,6 @@
   // ======================================================================
   // Init
   // ======================================================================
-  const saved = store.get('timer', null);
-  if (saved) { $('inTotal').value = saved.total; $('inLead').value = saved.lead; }
-  readSettings();
   renderSetup(); renderGear();
   if (!validRoutine(routine) || routine.type !== type) generate();
   build(); render();
