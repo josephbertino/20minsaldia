@@ -237,6 +237,8 @@
   // ======================================================================
   // Exercise library — "20 Mins al Día", sección 05 (Biblioteca de ejercicios)
   // [name, muscles, levels (0=Principiante 1=Int. Bajo 2=Int. Alto 3=Experto), equipment, video, ★]
+  // Joe's rule: no mochila (backpack) as equipment. Where the guide says mochila, this library uses a pesa rusa;
+  // weighted push-ups, planks and pull-ups use the chaleco only. Curl con mochila was dropped (Horn curl covers it).
   // ======================================================================
   const LEVELS = ['Principiante', 'Int. Bajo', 'Int. Alto', 'Experto'];
   const MUSCLES = {
@@ -249,22 +251,21 @@
     nom:   ['Ninguno (o mancuernas)', [[]]],
     bot:   ['Botellas con agua', [['botellas']]],
     silla: ['Silla', [['silla']]],
-    moc:   ['Mochila con peso', [['mochila']]],
     kb:    ['Pesa rusa', [['kb']]],
-    kbm:   ['Pesa rusa o mochila', [['kb'], ['mochila']]],
+    kbm:   ['Pesa rusa', [['kb']]],
     kbmn:  ['Pesa rusa o mancuernas', [['kb'], ['mancuernas']]],
-    kbmm:  ['Pesa rusa, mancuernas o mochila', [['kb'], ['mancuernas'], ['mochila']]],
+    kbmm:  ['Pesa rusa o mancuernas', [['kb'], ['mancuernas']]],
     kb2:   ['2 pesas rusas o mancuernas', [['kb2'], ['mancuernas']]],
     mn:    ['Mancuernas', [['mancuernas']]],
-    chm:   ['Chaleco o mochila', [['chaleco'], ['mochila']]],
+    chm:   ['Chaleco con peso', [['chaleco']]],
     ban:   ['Banda de resistencia', [['banda']]],
     bar:   ['Barra de dominadas', [['barra']]],
-    barch: ['Barra + chaleco o mochila', [['barra', 'chaleco'], ['barra', 'mochila']]],
+    barch: ['Barra + chaleco', [['barra', 'chaleco']]],
     mesa:  ['Barra o escritorio firme', [['mesa']]]
   };
   const GEAR = [
     ['kb', 'Pesa rusa', true], ['barra', 'Barra de dominadas', true], ['chaleco', 'Chaleco con peso', true],
-    ['mochila', 'Mochila', true], ['botellas', 'Botellas con agua', true], ['silla', 'Silla', true],
+    ['botellas', 'Botellas con agua', true], ['silla', 'Silla', true],
     ['kb2', 'Segunda pesa rusa', false], ['mancuernas', 'Mancuernas', false], ['banda', 'Banda de resistencia', false],
     ['mesa', 'Barra baja o escritorio firme (remo invertido)', false]
   ];
@@ -301,8 +302,7 @@
     pull: [
       ['Elevaciones laterales con botellas', 'HL', '0', 'bot', YT + 'watch?v=NX4twx9uRok', 1],
       ['Curl de bíceps elevado con botellas', 'HL+Bi', '0', 'bot', YT + 'watch?v=mmH9fT6YRas'],
-      ['Remo inclinado con mochila', 'Es+Bi', '01', 'moc', YT + 'shorts/8R5W556LJQU', 1],
-      ['Curl con mochila', 'Bi', '01', 'moc', YT + 'shorts/w2EWlVSsF1A'],
+      ['Remo inclinado con pesa rusa', 'Es+Bi', '01', 'kb', YT + 'watch?v=vjM-TVScoao', 1],
       ['Ángeles invertidos', 'Es', '01', '', YT + 'shorts/04RaU03kgEI'],
       ['Superman con jalón', 'Es+Co', '01', 'nom', YT + 'watch?v=XMvTVF6IqP0'],
       ['Elevación lateral con pesas', 'HL', '0123', 'kb2', YT + 'shorts/zBqZqAjCnR4', 1],
@@ -326,7 +326,7 @@
     pierna: [
       ['Sentadilla asistida con silla', 'Cu+Gl', '0', 'silla', YT + 'shorts/0cR3trxOgAY', 1],
       ['Sentadilla', 'Cu+Gl', '01', '', YT + 'shorts/zzKu_zgCH8c', 1],
-      ['Buenos días con mochila', 'Gl+Is', '01', 'moc', YT + 'watch?v=BcL14WQML18'],
+      ['Buenos días con pesa rusa', 'Gl+Is', '01', 'kb', YT + 'watch?v=A42LMU4iQWM'],
       ['Puente de glúteos', 'Gl+Co', '01', '', YT + 'shorts/FfXq0AUz_Xw', 1],
       ['Caminata en puntillas', 'Ge+Co', '01', '', YT + 'shorts/0_pFOJ6kGws', 1],
       ['Zancada hacia atrás', 'Cu+Gl', '01', '', YT + 'shorts/8xtGoDqX4c8', 1],
