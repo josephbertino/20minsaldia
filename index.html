@@ -235,7 +235,7 @@
   };
 
   // ======================================================================
-  // Exercise library — "20 Mins al Día", sección 05 (Biblioteca de ejercicios)
+  // Exercise library
   // [name, muscles, levels (0=Principiante 1=Int. Bajo 2=Int. Alto 3=Experto), equipment, video, ★]
   // ======================================================================
   const LEVELS = ['Principiante', 'Int. Bajo', 'Int. Alto', 'Experto'];
@@ -243,7 +243,7 @@
     Pe: 'Pecho', Tr: 'Tríceps', HF: 'Hombro (F)', HL: 'Hombro (L)', Bi: 'Bíceps', Es: 'Espalda', Co: 'Core',
     Cu: 'Cuádriceps', Gl: 'Glúteos', Is: 'Isquiotibiales', Ge: 'Gemelos', Fr: 'Core · Frente', Cs: 'Core · Costados'
   };
-  // equipment code -> [label from the guide, alternatives (any one set of items is enough)]
+  // equipment code -> [label, alternatives (any one set of items is enough)]
   const EQUIP = {
     '':    ['Ninguno', [[]]],
     nom:   ['Ninguno (o mancuernas)', [[]]],
@@ -296,7 +296,6 @@
       ['Flexión de esfinge', 'Tr+Co', '23', '', YT + 'shorts/JvG2Kt2GgGs'],
       ['Flexión en pica con pies elevados', 'HF+Tr', '3', '', YT + 'shorts/xk4NBMP1IJM', 1],
       ['Flexión de arquero', 'Pe+Tr', '3', '', YT + 'shorts/Ebu9H5yQEbY'],
-      // Added after Joe's review (2026-11-28); these are not in the guide:
       ['Flexión declinada (pies en la silla)', 'Pe+HF', '23', 'silla', YT + 'shorts/x3XztsyxHp4'],
       ['Elevación frontal isométrica con pesa rusa (45 s)', 'HF', '12', 'kb', YT + 'watch?v=7Bg8_IPzTyo'],
       ['Press de piso con agarre de presión (pesa rusa)', 'Pe', '123', 'kb', YT + 'shorts/bcLoDQuB_KI']
@@ -312,7 +311,7 @@
       ['Curl con bandas', 'Bi', '0123', 'ban', YT + 'watch?v=eBXEQ3v8fSY'],
       ['Pullover', 'Es', '0123', 'kbm', YT + 'shorts/96STTfPthqQ'],
       ['Remo vertical con pesa rusa', 'HL', '0123', 'kbm', YT + 'shorts/6ARhwq3_2ws', 1],
-      ['Halo con pesa rusa', 'HL', '0123', 'kb', YT + 'shorts/vPCAP-rHUR0'],   // added by Joe, not in the guide
+      ['Halo con pesa rusa', 'HL', '0123', 'kb', YT + 'shorts/vPCAP-rHUR0'],
       ['Remo invertido (piernas dobladas)', 'Es+Bi', '1', 'mesa', YT + 'watch?v=Eh5FY4dpC3c', 1],
       ['Dominadas negativas', 'Es+Bi', '1', 'bar', YT + 'shorts/0ZP86cDHXnM', 1],
       ['Remo inclinado a una mano', 'Es+Bi', '12', 'kbm', YT + 'shorts/cBbkLv3ZcDs', 1],
@@ -324,7 +323,6 @@
       ['Remo invertido (piernas elevadas)', 'Es+Bi', '2', 'mesa', YT + 'watch?v=8grT7NqpOxw', 1],
       ['Dominada', 'Es+Bi', '23', 'bar', YT + 'shorts/BT3CSQKeEww', 1],
       ['Dominada con peso', 'Es+Bi', '3', 'barch', YT + 'shorts/aLBlVXR8j08'],
-      // Added after Joe's review (2026-11-28); these are not in the guide:
       ['Elevación lateral a una mano con pesa rusa', 'HL', '123', 'kb', YT + 'watch?v=D3K6acqhHpQ'],
       ['Elevación lateral inclinada con pesa rusa', 'HL', '23', 'kb', YT + 'watch?v=iywNsBvOY-g'],
       ['Remo renegado a una mano con pesa rusa', 'Es+Co', '23', 'kb', YT + 'shorts/6rWeJh_e2jA'],
@@ -346,7 +344,7 @@
       ['Sentadilla con salto', 'Cu+Ge', '12', '', YT + 'shorts/9hi65bciMdA', 1],
       ['Sentadilla goblet', 'Cu+Gl', '123', 'kbm', YT + 'shorts/7-80HiXX1K8', 1],
       ['Zancada hacia atrás goblet', 'Cu+Gl', '123', 'kbm', YT + 'shorts/oU7Z1lSbvA0', 1],
-      ['Peso muerto rumano', 'Gl+Is', '0123', 'kbm', YT + 'shorts/YTg29FfdaQk', 1],   // Principiante added by Joe; the guide starts it at Int. Bajo
+      ['Peso muerto rumano', 'Gl+Is', '0123', 'kbm', YT + 'shorts/YTg29FfdaQk', 1],
       ['Caminata en puntillas con peso', 'Ge+Co', '123', 'kbm', YT + 'shorts/6lHKz9qnm0U', 1],
       ['Sentadilla con elevación de talones + peso', 'Cu+Ge', '123', 'kbm', YT + 'shorts/3wCp6MN2Z_Q'],
       ['Sentadilla isométrica + peso (45 s)', 'Cu', '123', 'kbm', YT + 'shorts/vfa2G-mKyI8'],
@@ -359,7 +357,6 @@
       ['Sentadilla pistola asistida', 'Cu+Gl', '23', '', YT + 'shorts/4yvWPos4ark'],
       ['Sentadilla con salto + peso', 'Cu+Ge', '23', 'kbm', YT + 'shorts/sCqllk6DR9w', 1],
       ['Sentadilla pistola', 'Cu+Gl', '3', '', YT + 'watch?v=LedPBQ4MdSw'],
-      // Added after Joe's review (2026-11-28); these are not in the guide:
       ['Puente de glúteos con pies en la silla', 'Gl+Is', '01', 'silla', YT + 'watch?v=3NR5UbLgQhE'],
       ['Buenos días sin peso', 'Gl+Is', '0', '', YT + 'watch?v=61zbhuRiwQg']
     ],
@@ -390,7 +387,7 @@
   const LIB = {}, BYKEY = {};
   Object.entries(RAW).forEach(([cat, rows]) => {
     LIB[cat] = rows.map(([name, m, lv, eq, url, star]) => {
-      const hs = name.match(/\((\d+) s\)/);   // timed holds are written "(45 s)" in the guide
+      const hs = name.match(/\((\d+) s\)/);   // timed holds have their length in the name, e.g. "(45 s)"
       const ex = { key: cat + '|' + name, cat, name, m: m.split('+'), lv: [...lv].map(Number), eq, url, star: !!star,
                    iso: !!hs, secs: hs ? +hs[1] : 0, short: name.replace(/\s*\(\d+ s\)/, '') };
       BYKEY[ex.key] = ex;
